@@ -324,14 +324,14 @@ void setup() {
   ledcWrite(1, 127);
   ledcWrite(2, 127);
 #endif
-#ifdef OLED_DISPLAY
-  oled_initscr();
-#endif
 #ifdef NUNCHUCK_CONTROL
   pinMode(SDA_PIN, INPUT_PULLUP);
   pinMode(SCL_PIN, INPUT_PULLUP);
   delay(10);
   nunchuck_init(SDA_PIN, SCL_PIN);
+#endif
+#ifdef OLED_DISPLAY
+  oled_initscr();
 #endif
 #ifdef RTC_IC
   if (!rtc.begin()) {

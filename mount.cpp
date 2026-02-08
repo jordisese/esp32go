@@ -314,16 +314,19 @@ void pulse_stop_dec(mount_t *mt) {
   mt->altmotor->slewing = FALSE;
   mt->altmotor->locked = 1;
   mt->altmotor->targetspeed = 0.0;
+  setspeed(mt->altmotor,0.0);
   //  pulse_dec_tckr.detach();
 }
 void pulse_stop_ra(mount_t *mt) {
   mt->azmotor->slewing = FALSE;
   mt->azmotor->targetspeed = mt->track_speed;  //* mt->track;
+  setspeed(mt->azmotor, mt->track_speed);
   // pulse_ra_tckr.detach();
 }
 
 void pulse_guide(mount_t *mt, char dir, int interval) {
   mt->altmotor->slewing = mt->azmotor->slewing = FALSE;
+  mt->srate = 0;
   int srate = mt->srate;
   int invert = (get_pierside(mt)) ? -1 : 1;
   // int  sid = (srate == 0) ? 1 : -1;
@@ -331,19 +334,23 @@ void pulse_guide(mount_t *mt, char dir, int interval) {
   switch (dir) {
     case 'n':
       mt->altmotor->targetspeed = SID_RATE_RAD * mt->rate[0][1] * invert;
+      setspeed(mt->altmotor, mt->altmotor->targetspeed);
       pulse_dec_tckr.once_ms(interval, pulse_stop_dec, mt);
       break;
     case 's':
       mt->altmotor->targetspeed = -SID_RATE_RAD * mt->rate[0][1] * invert;
+      setspeed(mt->altmotor, mt->altmotor->targetspeed);
       pulse_dec_tckr.once_ms(interval, pulse_stop_dec, mt);
       break;
     case 'w':
       mt->azmotor->targetspeed = SID_RATE_RAD * (mt->rate[0][0] + sid);
+      setspeed(mt->azmotor, mt->azmotor->targetspeed);
       pulse_ra_tckr.once_ms(interval, pulse_stop_ra, mt);
       break;
     case 'e':
       mt->azmotor->targetspeed = -SID_RATE_RAD * (mt->rate[0][0] - sid);
-      pulse_dec_tckr.once_ms(interval, pulse_stop_ra, mt);
+      setspeed(mt->azmotor, mt->azmotor->targetspeed);
+      pulse_ra_tckr.once_ms(interval, pulse_stop_ra, mt);
       break;
   };
 }

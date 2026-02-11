@@ -478,3 +478,24 @@ void buzzerOff(char *p)
 #endif
 #endif
 }
+
+void wifiStrength(char * signalStrengthStr)
+{
+  char temp[80];
+  if(WiFi.status()!=WL_CONNECTED)
+  {
+    sprintf(temp,"N/A (AP mode)");
+  }
+  else
+  {
+    // wifi signal strength
+    long signal_strength_dbm = WiFi.RSSI();
+    long signal_strength_qty = 2*(signal_strength_dbm + 100);
+    if (signal_strength_qty > 100) 
+      signal_strength_qty = 100; 
+    else if (signal_strength_qty < 0)
+      signal_strength_qty = 0;
+    sprintf(temp, "%lddBm (%ld%%)", signal_strength_dbm, signal_strength_qty);
+  }
+  strncpy(signalStrengthStr, temp, 20); signalStrengthStr[19] = 0;
+}

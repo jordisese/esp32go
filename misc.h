@@ -41,6 +41,6 @@ void setwifipad(int ip3, int ip2);
 int getoffset(void);
 void buzzerOn(unsigned long milliseconds);
 void buzzerOff(char *p);
-
+void wifiStrength(char * signalStrengthStr);
 
 #endif

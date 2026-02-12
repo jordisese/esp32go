@@ -28,6 +28,12 @@ double true_target = 0;
 #endif
 bool az_goto = false;
 bool home_goto = false;
+extern boolean ongoing_pulse_ra;
+extern boolean ongoing_pulse_dec;
+boolean ongoing_pulse_n = false;
+boolean ongoing_pulse_s = false;
+boolean ongoing_pulse_w = false;
+boolean ongoing_pulse_e = false;
 mount_t *create_mount(void) {
   int maxcounter = AZ_RED;
   int maxcounteralt = ALT_RED;
@@ -315,12 +321,16 @@ void pulse_stop_dec(mount_t *mt) {
   mt->altmotor->locked = 1;
   mt->altmotor->targetspeed = 0.0;
   setspeed(mt->altmotor,0.0);
+  ongoing_pulse_dec = false;
+  ongoing_pulse_n = ongoing_pulse_s = false;
   //  pulse_dec_tckr.detach();
 }
 void pulse_stop_ra(mount_t *mt) {
   mt->azmotor->slewing = FALSE;
   mt->azmotor->targetspeed = mt->track_speed;  //* mt->track;
   setspeed(mt->azmotor, mt->track_speed);
+  ongoing_pulse_ra = false;
+  ongoing_pulse_w = ongoing_pulse_e = false;
   // pulse_ra_tckr.detach();
 }
 
@@ -333,21 +343,37 @@ void pulse_guide(mount_t *mt, char dir, int interval) {
   int sid = 1;
   switch (dir) {
     case 'n':
+      if(ongoing_pulse_n)
+        break;
+      ongoing_pulse_n = true;
+      ongoing_pulse_dec = true;
       mt->altmotor->targetspeed = SID_RATE_RAD * mt->rate[0][1] * invert;
       setspeed(mt->altmotor, mt->altmotor->targetspeed);
       pulse_dec_tckr.once_ms(interval, pulse_stop_dec, mt);
       break;
     case 's':
+      if(ongoing_pulse_s)
+        break;
+      ongoing_pulse_s = true;
+      ongoing_pulse_dec = true;
       mt->altmotor->targetspeed = -SID_RATE_RAD * mt->rate[0][1] * invert;
       setspeed(mt->altmotor, mt->altmotor->targetspeed);
       pulse_dec_tckr.once_ms(interval, pulse_stop_dec, mt);
       break;
     case 'w':
+      if(ongoing_pulse_w)
+        break;
+      ongoing_pulse_w = true;
+      ongoing_pulse_ra = true;
       mt->azmotor->targetspeed = SID_RATE_RAD * (mt->rate[0][0] + sid);
       setspeed(mt->azmotor, mt->azmotor->targetspeed);
       pulse_ra_tckr.once_ms(interval, pulse_stop_ra, mt);
       break;
     case 'e':
+      if(ongoing_pulse_e)
+        break;
+      ongoing_pulse_e = true;
+      ongoing_pulse_ra = true;
       mt->azmotor->targetspeed = -SID_RATE_RAD * (mt->rate[0][0] - sid);
       setspeed(mt->azmotor, mt->azmotor->targetspeed);
       pulse_ra_tckr.once_ms(interval, pulse_stop_ra, mt);

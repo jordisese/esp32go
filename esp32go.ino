@@ -40,6 +40,8 @@ hw_timer_t* timer_az = NULL;
 hw_timer_t* timer_alt = NULL;
 hw_timer_t* timer_focus = NULL;
 hw_timer_t* timer_aux = NULL;
+boolean ongoing_pulse_ra = false;
+boolean ongoing_pulse_dec = false;
 #ifdef OTA
 #include <ArduinoOTA.h>
 #include "OTA_helper.hpp"
@@ -605,10 +607,9 @@ void setup() {
 }
 
 void loop() {
-
   // buzzerOff();
   int zcount[2];
-  delay(10);
+  //delay(10);
   net_task();
 #ifndef BT_TRACE_USB
   if (bt_on)
@@ -620,6 +621,14 @@ void loop() {
 
   now = time(nullptr);
   serverweb.handleClient();
+
+  // if guiding don't do anything else - back to looop
+  if(ongoing_pulse_ra || ongoing_pulse_dec)
+  {
+    counter++;
+    return;
+  }
+
 #ifdef IR_CONTROL
   if (counter % 6 == 0)
     ir_read();

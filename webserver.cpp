@@ -591,7 +591,7 @@ void handleMeridian(void) {
 }
 
 void handleMonitor(void) {
-  char page[1000];
+  char page[1500];
   char buffra[12];
   char buffdec[12];
   char times[300];
@@ -599,6 +599,10 @@ void handleMonitor(void) {
   time_t t = time(NULL);
   int fg, azcount, altcount;
   int zcount[2] = { 0, 0 };
+  //---
+  char wifisignal[80];
+  wifiStrength(wifisignal);
+  //---
 
   fg = getoffset();
   sprintf(times, "UTC:%s  %d", asctime(gmtime(&t)), fg);
@@ -635,7 +639,7 @@ void handleMonitor(void) {
   lxprintaz1(azangle,telescope->azmotor->position);
   lxprintaz1(altangle,telescope->altmotor->position);
   buffdec[3] = ':';
-  snprintf(page, 1000,
+  snprintf(page, 1500,
            "<html>\
 <head> <meta http-equiv='refresh' content='3'><style>" BUTTTEXTT "</style>" AUTO_SIZE " </head>\
 <body  bgcolor=\"#000000\" text=\"#5599ff\"><h2>Monitor</h2> \
@@ -650,13 +654,15 @@ void handleMonitor(void) {
 <br>AZ angle: %s<br>Alt angle: %s \
 <br>PEC:%d  %d<br>\
 <br>WifiPAD IP : X.X%d.%d<br><button onclick=\"location.href='/'\" class=\"button_red\" type=\"button\">Back</button><br>\
- Date %s <br> %s <br> NVRAM %d %d\
+ Date %s <br> %s \
+<br>Wifi Signal Strength: %s <br>\
+<br> NVRAM %d %d\
 </body></html>",
            telescope->azmotor->counter, telescope->altmotor->counter, azbackcounter,
            altbackcounter, clients_connected, focus_motor.position, aux_motor.position,
            telescope->azmotor->slewing, telescope->altmotor->slewing, telescope->is_tracking, telescope->track,
            String(telescope->azmotor->targetspeed, 15).c_str(), String(telescope->altmotor->targetspeed, 15).c_str(),
-           telescope->parked, &buffra, &buffdec, &azangle, &altangle, encb, enc, wifi_pad_IP2, wifi_pad_IP3, ctime(&now), times, zcount[0], zcount[1]);
+           telescope->parked, &buffra, &buffdec, &azangle, &altangle, encb, enc, wifi_pad_IP2, wifi_pad_IP3, ctime(&now), times, wifisignal, zcount[0], zcount[1]);
   serverweb.send(200, "text/html", page);
 }
 
@@ -720,8 +726,14 @@ void handleMain(void) {
   content += "<button onclick=\"location.href='/time'\" class=\"button_red\" type=\"button\">Sync Date/Time</button>";
   content += "<button onclick=\"location.href='/monitor'\" class=\"button_red\" type=\"button\">Monitor Counters</button><br>";
   content += "<button onclick=\"location.href='/iana'\" class=\"button_red\" type=\"button\">IANA Timezone Set </button></table></fieldset>";
-
+  if(WiFi.status()==WL_CONNECTED)
+  {
+    char wifisignal[80];
+    wifiStrength(wifisignal);
+    content += "<br>WiFi Signal Strength : "+ String(wifisignal);
+  }
   content += "<br>Loaded at Time :" + String(ctime(&now)) + String(NTP_Sync ? "NTP OK" : "RTC") + " Offset:" + String(getoffset()) + "<br></body></html>";
+  
   serverweb.send(200, "text/html", content);
 }
 
